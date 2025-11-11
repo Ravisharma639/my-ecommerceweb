@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/components/*": ["components/*"],
+      "@/app/*": ["app/*"],
+      "@/context/*": ["context/*"],
+      "@/providers/*": ["providers/*"],
+      "@/lib/*": ["lib/*"],           
+      "@/public/*": ["public/*"]      
+    }
+  },
+  "include": [
+    "app/**/*",
+    "components/**/*",
+    "context/**/*",
+    "providers/**/*",
+    "lib/**/*"
+  ]
+}

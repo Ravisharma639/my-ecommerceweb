@@ -1,19 +1,24 @@
 {
-  "name": "x-clone",
-  "version": "0.1.0",
+  "name": "ecommerce-mren",
+  "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start"
-  },
-  "dependencies": {
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
-    "next": "15.5.5"
+    "dev": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
+    "start": "npm run start --prefix backend"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4"
+    "concurrently": "^9.2.1"
+  },
+  "dependencies": {
+    "@tailwindcss/line-clamp": "^0.4.4",
+    "axios": "^1.13.1",
+    "cross-env": "^10.1.0",
+    "express-async-handler": "^1.2.0",
+    "framer-motion": "^12.23.24",
+    "lucide-react": "^0.548.0",
+    "next-auth": "^4.24.12",
+    "razorpay": "^2.9.6",
+    "twilio": "^5.10.4"
   }
 }
