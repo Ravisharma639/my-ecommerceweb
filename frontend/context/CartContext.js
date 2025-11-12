@@ -1,63 +1,72 @@
-"use client"; // Important!
+"use client"; // ✅ Required for Next.js App Router components
 
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
 
 const CartContext = createContext();
 
+/**
+ * 🛒 CartProvider - Wraps the app and manages cart state
+ */
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
 
-  // ✅ Load from localStorage when component mounts
+  /**
+   * ✅ Load cart from localStorage on first render
+   */
   useEffect(() => {
     try {
-      const savedCart = localStorage.getItem("cart");
-      if (savedCart) {
-        setCartItems(JSON.parse(savedCart));
+      if (typeof window !== "undefined") {
+        const savedCart = localStorage.getItem("cart");
+        if (savedCart) setCartItems(JSON.parse(savedCart));
       }
     } catch (error) {
-      console.error("Error loading cart:", error);
+      console.error("🧩 Error loading cart from localStorage:", error);
     }
   }, []);
 
-  // ✅ Save to localStorage whenever cart changes
+  /**
+   * ✅ Save cart to localStorage whenever it changes
+   */
   useEffect(() => {
     try {
-      localStorage.setItem("cart", JSON.stringify(cartItems));
+      if (typeof window !== "undefined") {
+        localStorage.setItem("cart", JSON.stringify(cartItems));
+      }
     } catch (error) {
-      console.error("Error saving cart:", error);
+      console.error("💾 Error saving cart:", error);
     }
   }, [cartItems]);
 
-  // ✅ Add item to cart (prevent duplicates)
-  const addToCart = (item) => {
+  /**
+   * 🛍️ Add item to cart
+   */
+  const addToCart = useCallback((item) => {
     setCartItems((prev) => {
-      const existingItem = prev.find((cartItem) => cartItem._id === item._id);
-
+      const existingItem = prev.find((p) => p._id === item._id);
       if (existingItem) {
-        // If item already exists, increase quantity instead of duplicating
-        return prev.map((cartItem) =>
-          cartItem._id === item._id
-            ? { ...cartItem, quantity: cartItem.quantity + 1 }
-            : cartItem
+        return prev.map((p) =>
+          p._id === item._id ? { ...p, quantity: p.quantity + 1 } : p
         );
       }
-
-      // Otherwise, add new item
       return [...prev, { ...item, quantity: 1 }];
     });
-  };
+  }, []);
 
-  // ✅ Increase item quantity
-  const increaseQuantity = (id) => {
+  /**
+   * 🔼 Increase quantity
+   */
+  const increaseQuantity = useCallback((id) => {
     setCartItems((prev) =>
       prev.map((item) =>
         item._id === id ? { ...item, quantity: item.quantity + 1 } : item
       )
     );
-  };
+  }, []);
 
-  // ✅ Decrease item quantity (and remove if 0)
-  const decreaseQuantity = (id) => {
+  /**
+   * 🔽 Decrease quantity (removes item if qty = 0)
+   */
+  const decreaseQuantity = useCallback((id) => {
     setCartItems((prev) =>
       prev
         .map((item) =>
@@ -65,25 +74,31 @@ export const CartProvider = ({ children }) => {
         )
         .filter((item) => item.quantity > 0)
     );
-  };
+  }, []);
 
-  // ✅ Remove single item
-  const removeFromCart = (id) => {
+  /**
+   * ❌ Remove item from cart
+   */
+  const removeFromCart = useCallback((id) => {
     setCartItems((prev) => prev.filter((item) => item._id !== id));
-  };
+  }, []);
 
-  // ✅ Clear all items
-  const clearCart = () => {
+  /**
+   * 🧹 Clear cart
+   */
+  const clearCart = useCallback(() => {
     setCartItems([]);
-    localStorage.removeItem("cart");
-  };
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("cart");
+    }
+  }, []);
 
-  // ✅ Total quantity count
-  const cartCount = cartItems.reduce((count, item) => count + item.quantity, 0);
-
-  // ✅ Total cart price
+  /**
+   * 🧾 Derived values
+   */
+  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const cartTotal = cartItems.reduce(
-    (total, item) => total + item.price * item.quantity,
+    (sum, item) => sum + item.price * item.quantity,
     0
   );
 
@@ -92,10 +107,10 @@ export const CartProvider = ({ children }) => {
       value={{
         cartItems,
         addToCart,
-        removeFromCart,
-        clearCart,
         increaseQuantity,
         decreaseQuantity,
+        removeFromCart,
+        clearCart,
         cartCount,
         cartTotal,
       }}
@@ -105,4 +120,12 @@ export const CartProvider = ({ children }) => {
   );
 };
 
-export const useCart = () => useContext(CartContext);
+/**
+ * ✅ Custom hook for accessing cart context
+ */
+export const useCart = () => {
+  const context = useContext(CartContext);
+  if (!context)
+    throw new Error("useCart must be used within a CartProvider");
+  return context;
+};
