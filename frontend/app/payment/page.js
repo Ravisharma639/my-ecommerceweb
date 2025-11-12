@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCart } from "../../context/CartContext";
+import { useCart } from "../../../context/CartContext"; // ✅ updated path if needed
 
-export default function PaymentPage() {
+function PaymentPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId");
@@ -28,16 +28,14 @@ export default function PaymentPage() {
     }
   }, [router]);
 
-  // 💳 Simulated payment handler (replace with Razorpay later)
   const handlePayment = async () => {
     setError("");
     setProcessing(true);
 
     try {
-      // Simulate 2-second delay for payment
+      // Simulate payment delay
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      // Optionally confirm order in backend
       const res = await fetch("http://localhost:5000/api/orders/confirm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -47,7 +45,6 @@ export default function PaymentPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Payment failed.");
 
-      // ✅ Clear cart data after successful payment
       localStorage.removeItem("cart");
       localStorage.removeItem("checkoutDetails");
 
@@ -93,7 +90,9 @@ export default function PaymentPage() {
           </div>
         </div>
 
-        {error && <p className="text-red-500 mt-4 text-center font-medium">{error}</p>}
+        {error && (
+          <p className="text-red-500 mt-4 text-center font-medium">{error}</p>
+        )}
 
         <div className="mt-8 text-center">
           <motion.button
@@ -116,5 +115,13 @@ export default function PaymentPage() {
         </p>
       </motion.div>
     </div>
+  );
+}
+
+export default function PaymentPage() {
+  return (
+    <Suspense fallback={<div className="text-center mt-10">Loading payment...</div>}>
+      <PaymentPageContent />
+    </Suspense>
   );
 }
