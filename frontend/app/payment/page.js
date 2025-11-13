@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCart } from "../../context/CartContext"; // ✅ Correct path (only 2 levels up)
+import { useCart } from "../../context/CartContext";
 
 export default function PaymentPage() {
   const router = useRouter();
@@ -16,58 +16,44 @@ export default function PaymentPage() {
     address: "",
     totalAmount: 0,
   });
-
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
 
-  /**
-   * ✅ Load checkout details from localStorage (redirect if missing)
-   */
   useEffect(() => {
-    try {
-      if (typeof window !== "undefined") {
-        const details = localStorage.getItem("checkoutDetails");
-        if (details) {
-          setCheckoutDetails(JSON.parse(details));
-        } else {
-          router.push("/checkout");
-        }
-      }
-    } catch (err) {
-      console.error("Error loading checkout details:", err);
+    const details = localStorage.getItem("checkoutDetails");
+    if (details) {
+      setCheckoutDetails(JSON.parse(details));
+    } else {
+      router.push("/checkout"); // Redirect if no checkout details
     }
   }, [router]);
 
-  /**
-   * 💳 Simulated payment handler — Replace with Razorpay/Stripe later
-   */
+  // 💳 Simulated payment handler (replace with Razorpay later)
   const handlePayment = async () => {
     setError("");
     setProcessing(true);
 
     try {
-      // 🕒 Simulate payment delay (2 seconds)
+      // Simulate 2-second delay for payment
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      // 🧾 Confirm order on backend (optional mock)
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/orders/confirm`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ orderId }),
-        }
-      );
+      // Optionally confirm order in backend
+      const res = await fetch("http://localhost:5000/api/orders/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId }),
+      });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Payment failed.");
 
-      // ✅ Clear local cart and redirect
+      // ✅ Clear cart data after successful payment
       localStorage.removeItem("cart");
       localStorage.removeItem("checkoutDetails");
+
       router.push(`/success?orderId=${orderId}`);
     } catch (err) {
-      console.error("Payment error:", err);
+      console.error(err);
       setError(err.message || "Something went wrong during payment.");
     } finally {
       setProcessing(false);
@@ -107,9 +93,7 @@ export default function PaymentPage() {
           </div>
         </div>
 
-        {error && (
-          <p className="text-red-500 mt-4 text-center font-medium">{error}</p>
-        )}
+        {error && <p className="text-red-500 mt-4 text-center font-medium">{error}</p>}
 
         <div className="mt-8 text-center">
           <motion.button
