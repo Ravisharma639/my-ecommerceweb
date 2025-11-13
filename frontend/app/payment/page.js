@@ -1,11 +1,11 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCart } from "../../../context/CartContext"; // ✅ updated path if needed
+import { useCart } from "../../context/CartContext"; // ✅ Correct path (only 2 levels up)
 
-function PaymentPageContent() {
+export default function PaymentPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const orderId = searchParams.get("orderId");
@@ -16,41 +16,58 @@ function PaymentPageContent() {
     address: "",
     totalAmount: 0,
   });
+
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
 
+  /**
+   * ✅ Load checkout details from localStorage (redirect if missing)
+   */
   useEffect(() => {
-    const details = localStorage.getItem("checkoutDetails");
-    if (details) {
-      setCheckoutDetails(JSON.parse(details));
-    } else {
-      router.push("/checkout"); // Redirect if no checkout details
+    try {
+      if (typeof window !== "undefined") {
+        const details = localStorage.getItem("checkoutDetails");
+        if (details) {
+          setCheckoutDetails(JSON.parse(details));
+        } else {
+          router.push("/checkout");
+        }
+      }
+    } catch (err) {
+      console.error("Error loading checkout details:", err);
     }
   }, [router]);
 
+  /**
+   * 💳 Simulated payment handler — Replace with Razorpay/Stripe later
+   */
   const handlePayment = async () => {
     setError("");
     setProcessing(true);
 
     try {
-      // Simulate payment delay
+      // 🕒 Simulate payment delay (2 seconds)
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      const res = await fetch("http://localhost:5000/api/orders/confirm", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId }),
-      });
+      // 🧾 Confirm order on backend (optional mock)
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/orders/confirm`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderId }),
+        }
+      );
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Payment failed.");
 
+      // ✅ Clear local cart and redirect
       localStorage.removeItem("cart");
       localStorage.removeItem("checkoutDetails");
-
       router.push(`/success?orderId=${orderId}`);
     } catch (err) {
-      console.error(err);
+      console.error("Payment error:", err);
       setError(err.message || "Something went wrong during payment.");
     } finally {
       setProcessing(false);
@@ -115,13 +132,5 @@ function PaymentPageContent() {
         </p>
       </motion.div>
     </div>
-  );
-}
-
-export default function PaymentPage() {
-  return (
-    <Suspense fallback={<div className="text-center mt-10">Loading payment...</div>}>
-      <PaymentPageContent />
-    </Suspense>
   );
 }
